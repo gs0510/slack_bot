@@ -1,41 +1,44 @@
-let () = print_endline "Hello, World!"
 
-let _ = Printf.printf "1"
 let token = "xoxb-18193414053-1098751527969-2WaxTFvOO9yj4bf9JpGTJ1yD"
 
-let _ = Printf.printf "2"
 
-let session = Slacko.start_session token
+let args_channel = ["-F"; "token=xoxb-18193414053-1098751527969-2WaxTFvOO9yj4bf9JpGTJ1yD"; "-F"; "channel=C011F85NCNT"; ]
 
-let _ = Printf.printf "3"
 
-let channel = Slacko.channel_of_string 
-"C01380ZAVGQ"
+open Yojson.Basic
+open Yojson.Basic.Util 
+let members = (match (Curly.(run ~args:args_channel (Request.make ~url:"https://slack.com/api/conversations.members" ~meth:`POST ()))) with
+| Ok x -> List.map to_string (from_string x.Curly.Response.body |> Util.member "members" |> Util.to_list)
+| _ -> failwith "There's an error")
+|> List.filter (fun id ->  (id <> "U012WN3FHUH"))
 
-let _ = Printf.printf "4"
 
-(* let client_secret = "d58aefac32c528902cc9a5bcede7e677"
-let client_id = "18193414053.1098751030673"
-let code ="c84af629d0f085ca758d71e240c437cc"
-let oauth = match (Lwt_main.run (Slacko.oauth_access client_id client_secret code )) with
-| `Success obj -> obj
-| _ -> failwith "Blah"
+let args_user id = ["-F"; "token=xoxb-18193414053-1098751527969-2WaxTFvOO9yj4bf9JpGTJ1yD"; "-F"; (Printf.sprintf "user=%s" id)]
+let user_names = let get_name_from_id id = (match (Curly.(run ~args:(args_user id) (Request.make ~url:"https://slack.com/api/users.info" ~meth:`POST ()))) with 
+| Ok x ->  from_string x.Curly.Response.body |> Util.member "user" |> Util.member "name" |> to_string
+| _ -> failwith "Can't get user name from id") 
+in 
+(List.map get_name_from_id members)
 
-let _ = Printf.printf "Oauth: %s %s" oauth.access_token oauth.scope *)
+let random_init = Random.init(int_of_float (Unix.time ()))
 
-let args = ["-F"; "token=xoxb-18193414053-1098751527969-2WaxTFvOO9yj4bf9JpGTJ1yD"; "-F"; "channel=C01380ZAVGQ"; ]
+let shuffle list =
+    let nd = List.map (fun c -> let random = Random.bits () in 
+      (random, c)) list in
+    let sond = List.sort compare nd in
+    List.map snd sond
 
-let members = match (Curly.(run ~args (Request.make ~url:"https://slack.com/api/conversations.members" ~meth:`POST ()))) with
-| Ok x ->
-  Format.printf "body: %s\n" x.Curly.Response.body
-| _ -> failwith "There's an error"
 
-let _ = Printf.printf "5"
+let rec match1 output users = 
+match users with
+| [] -> output ^ "\n Have some nice coffee chats :)�"
+| [last] -> output ^ (Printf.sprintf " with <@%s> \n Have some nice coffee chats :)" last)
+| f::s::tl -> match1 (output ^ (Printf.sprintf "\n <@%s> with <@%s>" f s)) tl 
 
-(* let user_names = let get_user_name = (fun user -> match (Lwt_main.run (Slacko.users_info session user)) with
-| `Success obj -> obj.name 
-| _ -> failwith "Can't obtain the user name.") in
-List.map get_user_name members
+let _ = Printf.printf "%s" (shuffle members |> match1 "") 
 
-let _ = Printf.printf "%s" (List. hd user_names ) *)
+let args_message = ["-F"; "token=xoxb-18193414053-1098751527969-2WaxTFvOO9yj4bf9JpGTJ1yD"; "-F"; "channel=C011F85NCNT"; "-F"; ("text="^(shuffle members |> match1 ""))]
 
+let _ = match (Curly.(run ~args:args_message (Request.make ~url:"https://slack.com/api/chat.postMessage" ~meth:`POST ()))) with
+    | Ok _ -> Printf.printf "yay"
+    | Error e -> Format.printf "Failed: %a" Curly.Error.pp e

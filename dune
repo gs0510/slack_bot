@@ -1,3 +1,3 @@
 (executable
  (name slack_bot)
- (libraries lwt curly yojson ))
+ (libraries lwt curly yojson irmin-unix))

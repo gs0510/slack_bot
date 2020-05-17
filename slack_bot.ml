@@ -1,6 +1,8 @@
 open Yojson.Basic
 open Yojson.Basic.Util
 
+type matches = { matched : string list list } [@@deriving yojson]
+
 let config = from_file "config"
 
 let token = member "token" config |> to_string
@@ -10,9 +12,6 @@ let channel = member "channel_id" config |> to_string
 let bot_id = member "bot_id" config |> to_string
 
 let args_channel = [ "-F"; "token=" ^ token; "-F"; "channel=" ^ channel ]
-
-open Yojson.Basic
-open Yojson.Basic.Util
 
 let members =
   ( match
@@ -50,21 +49,33 @@ let shuffle list =
   | f :: s :: tl ->
       match1 (output ^ Printf.sprintf "\n <@%s> with <@%s>" f s) tl *)
 
-let rec match1 (output: string list list)  (users: string list) : string list list =
+let rec match_list (output : string list list) (users : string list) :
+    string list list =
   match users with
   | [] -> output
-  | [ last ] -> (match output with
-    | [] -> failwith "There's only one person in this channel."
-    | fst :: tl -> ((last :: fst)::tl ))
-  | f :: s :: tl -> match1 ([f;s] :: output) tl 
+  | [ last ] -> (
+      match output with
+      | [] -> failwith "There's only one person in this channel."
+      | fst :: tl -> (last :: fst) :: tl )
+  | f :: s :: tl -> match_list ([ f; s ] :: output) tl
 
-let message = let matches = match1 [] members in 
+(* let message = let matches = match1 [] members in 
 List.fold_left (fun current_match  acc-> if List.length current_match = 2 
   then (acc^ (Printf.sprintf "\n <@%s> with <@%s>" (List.hd current_match) (List.nth current_match 1)))
 else (acc^ Printf.sprintf "\n <@%s> with <@%s> and <@%s>" (List.hd current_match) (List.nth current_match 1) (List.nth current_match 2) ) ) 
-"" matches
+"" matches *)
 
-let _ = Printf.printf "%s" (shuffle members |> match1 "")
+(* let message = let matches1 = match_list [] members in *)
+
+let create_output (matches_list : string list list) =
+  List.fold_left
+    (fun acc current_match -> acc ^ String.concat " with " current_match ^ "\n")
+    "" matches_list
+
+let _ = Printf.printf "%s" (match_list [] members |> create_output)
+
+let yojson_string_to_print =
+  Yojson.Safe.to_string (matches_to_yojson { matched = match_list [] members })
 
 (* let args_message = ["-F"; "token="^token; "-F"; "channel="^channel; "-F"; ("text="^(shuffle members |> match1 ""))]
 
@@ -72,7 +83,7 @@ let _ = match (Curly.(run ~args:args_message (Request.make ~url:"https://slack.c
     | Ok _ -> Printf.printf "yay"
     | Error e -> Format.printf "Failed: %a" Curly.Error.pp e *)
 
-module Git_store = Irmin_unix.Git.FS.KV (Irmin.Contents.Json)
+module Git_store = Irmin_unix.Git.FS.KV (Irmin.Contents.String)
 
 let git_config = Irmin_git.config ~bare:true "/tmp/irmin/new"
 
@@ -80,20 +91,23 @@ let info message = Irmin_unix.info ~author:"Example" "%s" message
 
 open Lwt.Infix
 
+(* let current_matches = (match_list [] members) in
+ let irmin_json = `O [("matched", current_matches)] *)
 let main =
   Git_store.Repo.v git_config >>= Git_store.master >>= fun t ->
   (* Set a/b/c to "Hello, Irmin!" *)
-  Git_store.set_exn t [ "Gargi" ]
-    [ ("Sonja", `Float 1.0); ("Nathan", `Float 1.0) ]
+  Git_store.set_exn t
+    [ string_of_float (Unix.time ()) ]
+    yojson_string_to_print
+    (*to_string [ matches_to_yojson { matched = match_list [] members } ] *)
     ~info:(info "my first commit")
   >>= fun () ->
   (* Get a/b/c *)
-  Git_store.get t [ "Gargi" ] >|= fun s ->
-  assert (s = [ ("Sonja", `Float 1.0); ("Nathan", `Float 1.0) ])
+  Git_store.get t [ "Gargi" ] >|= fun s -> assert (s = "")
 
 let () = Lwt_main.run main
 
-let weights =
+(* let weights =
   let tbl = Hashtbl.create 17 in
   List.iter
     (fun member ->
@@ -103,6 +117,6 @@ let weights =
         List.iter (fun other -> Hashtbl.add tbl member other) former_matches
       in
       Lwt_main.run main)
-    members
+    members *)
 
 (* let total_weight ran_list mm *)

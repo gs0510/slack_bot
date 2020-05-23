@@ -9,6 +9,8 @@ let token = member "token" config |> to_string
 
 let channel = member "channel_id" config |> to_string
 
+let test_channel = member "test_channel_id" config |> to_string
+
 let bot_id = member "bot_id" config |> to_string
 
 let args_channel = [ "-F"; "token=" ^ token; "-F"; "channel=" ^ channel ]
@@ -25,7 +27,9 @@ let members =
         ( from_string x.Curly.Response.body
         |> Util.member "members" |> Util.to_list )
   | _ -> failwith "There's an error" )
-  |> List.filter (fun id -> id <> bot_id)
+  |> List.filter (fun id -> id <> bot_id && id <>"U0J5U03J4" && id <> "U0JP4EH7H")
+  |> List.map (fun member -> "<@" ^ member ^ ">" ) 
+
 
 let random_init = Random.init (int_of_float (Unix.time ()))
 
@@ -77,11 +81,11 @@ let _ = Printf.printf "%s" (match_list [] members |> create_output)
 let yojson_string_to_print =
   Yojson.Safe.to_string (matches_to_yojson { matched = match_list [] members })
 
-(* let args_message = ["-F"; "token="^token; "-F"; "channel="^channel; "-F"; ("text="^(shuffle members |> match1 ""))]
+let args_message = ["-F"; "token="^token; "-F"; "channel="^test_channel; "-F"; ("text="^(shuffle members |> match_list [] |> create_output))]
 
 let _ = match (Curly.(run ~args:args_message (Request.make ~url:"https://slack.com/api/chat.postMessage" ~meth:`POST ()))) with
     | Ok _ -> Printf.printf "yay"
-    | Error e -> Format.printf "Failed: %a" Curly.Error.pp e *)
+    | Error e -> Format.printf "Failed: %a" Curly.Error.pp e
 
 module Git_store = Irmin_unix.Git.FS.KV (Irmin.Contents.String)
 
@@ -97,13 +101,13 @@ let main =
   Git_store.Repo.v git_config >>= Git_store.master >>= fun t ->
   (* Set a/b/c to "Hello, Irmin!" *)
   Git_store.set_exn t
-    [ string_of_float (Unix.time ()) ]
+    [ "matches"; string_of_float (Unix.time ()) ]
     yojson_string_to_print
     (*to_string [ matches_to_yojson { matched = match_list [] members } ] *)
     ~info:(info "my first commit")
   >>= fun () ->
   (* Get a/b/c *)
-  Git_store.get t [ "Gargi" ] >|= fun s -> assert (s = "")
+  Git_store.get t [ "matches" ] >|= fun s -> assert (s = "")
 
 let () = Lwt_main.run main
 

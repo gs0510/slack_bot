@@ -43,15 +43,6 @@ let shuffle list =
   let sond = List.sort compare nd in
   List.map snd sond
 
-(* let rec match1 output users =
-  match users with
-  | [] -> output ^ "\n Have some nice coffee chats :)�"
-  | [ last ] ->
-      output
-      ^ Printf.sprintf " with <@%s> \n Have some nice coffee chats :)" last
-  | f :: s :: tl ->
-      match1 (output ^ Printf.sprintf "\n <@%s> with <@%s>" f s) tl *)
-
 let rec match_list (output : string list list) (users : string list) :
     string list list =
   match users with
@@ -61,14 +52,6 @@ let rec match_list (output : string list list) (users : string list) :
       | [] -> failwith "There's only one person in this channel."
       | fst :: tl -> (last :: fst) :: tl )
   | f :: s :: tl -> match_list ([ f; s ] :: output) tl
-
-(* let message = let matches = match1 [] members in 
-List.fold_left (fun current_match  acc-> if List.length current_match = 2 
-  then (acc^ (Printf.sprintf "\n <@%s> with <@%s>" (List.hd current_match) (List.nth current_match 1)))
-else (acc^ Printf.sprintf "\n <@%s> with <@%s> and <@%s>" (List.hd current_match) (List.nth current_match 1) (List.nth current_match 2) ) ) 
-"" matches *)
-
-(* let message = let matches1 = match_list [] members in *)
 
 let create_output (matches_list : string list list) =
   List.map (List.map (fun member -> "<@" ^ member ^ ">")) matches_list
@@ -89,13 +72,7 @@ let all_old_matches db_path =
     Git_store.Repo.v git_config
     >>= Git_store.master
     >>= (fun t ->
-          (* Git_store.get t ["matches"; "1590251798"] >|= fun s -> Printf.printf "%s" s *)
-          (* Git_store.list t [  "matches"] >|=  List.iter (fun (step, kind) ->
-                match kind with
-                | `Contents -> Printf.printf "FILE %s\n" step
-                | `Node -> Printf.printf "DIR %s\n" step) *)
-
-          (* todo: also handle the case of directories with a log*)
+         (* todo: also handle the case of directories with a log*)
           Git_store.list t [ "matches" ] >|= List.map (fun (step, _) -> step))
     |> Lwt_main.run
   in
@@ -109,17 +86,26 @@ let all_old_matches db_path =
 
 let parsing_json all_matches_json = to_list all_matches_json |> List.map to_list
 
+let order_pair uid1 uid2 = if uid1 < uid2 then (uid1, uid2) else (uid2, uid1)
 let update_key uid1 uid2 tbl =
-  let pair = if uid1 < uid2 then (uid1, uid2) else (uid2, uid1) in
+  let pair =  order_pair uid1 uid2 in
   match Hashtbl.find_opt tbl pair with
   | Some num_matches -> Hashtbl.replace tbl pair (num_matches + 1)
   | None -> Hashtbl.add tbl pair 1
 
 let get_score uid1 uid2 tbl =
-  let pair = if uid1 < uid2 then (uid1, uid2) else (uid2, uid1) in
+  let pair = order_pair uid1 uid2 in
   match Hashtbl.find_opt tbl pair with
   | Some num_matches -> num_matches
   | None -> 0
+
+let rec fold_over_2 l1 l2 acc=
+let add_pair_avoiding_dupl mem1 mem1 list =
+  if mem2 <> mem1 then let ordered_pair = order_pair mem2 mem1 in ::inner_acc else inner_acc) in
+  match l1 with 
+| mem1::tl -> List.append acc (List.fold_left (fun inner_acc mem2-> if mem2 <> mem1 then (order_pair mem2 mem1)::inner_acc else inner_acc) [] l2) |> fold_over_2 tl l2
+| [] -> acc
+
 
 (* TODO: make the following two functions somehow reasonable!!!! xD *)
 let construct_hashmap all_old_matches =
@@ -184,18 +170,6 @@ let calculate_most_optimum_match num_times tbl =
   let first_match = shuffle members |> match_list [] in
   loop 1 first_match (compute_total_score tbl first_match)
 
-(* let _ = Printf.printf "hi"
-
-let tbl = Hashtbl.create 256 
-let _ = construct_hashmap all_matches tbl *)
-
-(* let _ = Hashtbl.iter (fun (uid1, uid2) score -> Printf.printf "Pair: %s , %s; score: %i\n" uid1 uid2 score) (construct_hashmap all_matches) *)
-
-(* let _ = from_string first_entry |> member "matched" |> to_list |> List.hd |> to_list |> List.hd |> to_string |> Printf.printf "\n\n here: %s\n" *)
-
-(* let current_matches = (match_list [] members) in
- let irmin_json = `O [("matched", current_matches)] *)
-
 let write_to_irmin our_match db_path =
   let git_config = Irmin_git.config ~bare:true db_path in
   let yojson_string_to_print =
@@ -231,8 +205,7 @@ let write_to_irmin_and_slack our_match case =
            ()))
   with
   | Ok _ ->
-      let _ = write_to_irmin our_match case.db_path in
-      Printf.printf "Yay"
+      write_to_irmin our_match case.db_path 
   | Error e -> Format.printf "Failed babqb: %a" Curly.Error.pp e
 
 let test_case = { channel = test_channel; db_path = "irmin/new" }

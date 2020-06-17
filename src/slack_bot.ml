@@ -53,12 +53,12 @@ let rec match_list (output : string list list) (users : string list) :
       | fst :: tl -> (last :: fst) :: tl )
   | f :: s :: tl -> match_list ([ f; s ] :: output) tl
 
+
 let create_output (matches_list : string list list) =
-  List.map (List.map (fun member -> "<@" ^ member ^ ">")) matches_list
-  |> List.fold_left
-       (fun acc current_match ->
-         acc ^ String.concat " with " current_match ^ "\n")
-       ""
+  (List.map (List.map (fun member ->"<@" ^ member ^ ">" )) matches_list |>
+  List.fold_left
+    (fun acc current_match -> acc ^ String.concat " with " current_match ^ "\n")
+    ":coffee: Matches this week:\n") ^ "\n Have some nice coffee chats! :grinning:"
 
 module Git_store = Irmin_unix.Git.FS.KV (Irmin.Contents.String)
 
@@ -99,12 +99,12 @@ let get_score uid1 uid2 tbl =
   | Some num_matches -> num_matches
   | None -> 0
 
-let rec fold_over_2 l1 l2 acc=
+(* let rec fold_over_2 l1 l2 acc=
 let add_pair_avoiding_dupl mem1 mem1 list =
   if mem2 <> mem1 then let ordered_pair = order_pair mem2 mem1 in ::inner_acc else inner_acc) in
   match l1 with 
 | mem1::tl -> List.append acc (List.fold_left (fun inner_acc mem2-> if mem2 <> mem1 then (order_pair mem2 mem1)::inner_acc else inner_acc) [] l2) |> fold_over_2 tl l2
-| [] -> acc
+| [] -> acc *)
 
 
 (* TODO: make the following two functions somehow reasonable!!!! xD *)
@@ -210,7 +210,7 @@ let write_to_irmin_and_slack our_match case =
 
 let test_case = { channel = test_channel; db_path = "irmin/new" }
 
-let real_case = { channel; db_path = "irmin/real" }
+let real_case = { channel; db_path = "../irmin/real" }
 
 let blah case =
   write_to_irmin_and_slack

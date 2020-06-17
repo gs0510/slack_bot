@@ -66,9 +66,10 @@ let info message = Irmin_unix.info ~author:"Example" "%s" message
 
 open Lwt.Infix
 
+
 let all_old_matches db_path =
   let git_config = Irmin_git.config ~bare:true db_path in
-  let our_list =
+  let  epoch_list =
     Git_store.Repo.v git_config
     >>= Git_store.master
     >>= (fun t ->
@@ -76,22 +77,24 @@ let all_old_matches db_path =
           Git_store.list t [ "matches" ] >|= List.map (fun (step, _) -> step))
     |> Lwt_main.run
   in
-  Git_store.Repo.v git_config
+  let matches = Git_store.Repo.v git_config
   >>= Git_store.master
   >>= (fun t ->
         Lwt_list.map_s
-          (fun epoch -> Git_store.get t [ "matches"; epoch ])
-          our_list)
-  |> Lwt_main.run
+          (fun epoch ->  Git_store.get t [ "matches"; epoch ] )
+          epoch_list)
+  |> Lwt_main.run in 
+  List.combine epoch_list matches
+
 
 let parsing_json all_matches_json = to_list all_matches_json |> List.map to_list
 
 let order_pair uid1 uid2 = if uid1 < uid2 then (uid1, uid2) else (uid2, uid1)
-let update_key uid1 uid2 tbl =
+let update_key uid1 uid2 tbl value =
   let pair =  order_pair uid1 uid2 in
   match Hashtbl.find_opt tbl pair with
-  | Some num_matches -> Hashtbl.replace tbl pair (num_matches + 1)
-  | None -> Hashtbl.add tbl pair 1
+  | Some num_matches -> Hashtbl.replace tbl pair (num_matches + value)
+  | None -> Hashtbl.add tbl pair value
 
 let get_score uid1 uid2 tbl =
   let pair = order_pair uid1 uid2 in
@@ -106,33 +109,42 @@ let add_pair_avoiding_dupl mem1 mem1 list =
 | mem1::tl -> List.append acc (List.fold_left (fun inner_acc mem2-> if mem2 <> mem1 then (order_pair mem2 mem1)::inner_acc else inner_acc) [] l2) |> fold_over_2 tl l2
 | [] -> acc *)
 
+let single_match_score epoch =
+     let now = Unix.time () in
+     let value = float_of_string epoch in
+     let day = 86400. in
+     if (now-.value)/. day <= 9. then 5
+     else if (now-. value) /. day  <= 16. then 3
+     else 1  
+    
 
 (* TODO: make the following two functions somehow reasonable!!!! xD *)
 let construct_hashmap all_old_matches =
   let tbl = Hashtbl.create 256 in
   List.iter
-    (fun match_json ->
-      from_string match_json |> member "matched" |> parsing_json
+    (fun (epoch, match_json) ->
+      let value = single_match_score epoch in
+     from_string match_json |> member "matched" |> parsing_json
       |> List.iter (fun current_match ->
              match List.length current_match with
              | 2 ->
                  update_key
                    (List.nth current_match 0 |> to_string)
                    (List.nth current_match 1 |> to_string)
-                   tbl
+                   tbl value
              | 3 ->
                  update_key
                    (List.nth current_match 0 |> to_string)
                    (List.nth current_match 1 |> to_string)
-                   tbl;
+                   tbl value;
                  update_key
                    (List.nth current_match 1 |> to_string)
                    (List.nth current_match 2 |> to_string)
-                   tbl;
+                   tbl value;
                  update_key
                    (List.nth current_match 0 |> to_string)
                    (List.nth current_match 2 |> to_string)
-                   tbl
+                   tbl value
              | _ -> failwith "not accounted for!"))
     all_old_matches;
   tbl
@@ -157,12 +169,12 @@ let compute_total_score tbl matches =
 
 let calculate_most_optimum_match num_times tbl =
   let rec loop num_iter best_match best_score =
-    if num_iter = num_times then best_match
+    if num_iter = num_times then let _ = Printf.printf "\n Number iterations: %d \n" num_iter in best_match
     else
       let new_match = shuffle members |> match_list [] in
       let new_score = compute_total_score tbl new_match in
       match new_score with
-      | 0 -> new_match
+      | 0 -> let _ = Printf.printf "\n Number iterations: %d \n" num_iter in new_match
       | _ ->
           if new_score < best_score then loop (num_iter + 1) new_match new_score
           else loop (num_iter + 1) best_match best_score
@@ -214,8 +226,10 @@ let real_case = { channel; db_path = "../irmin/real" }
 
 let blah case =
   write_to_irmin_and_slack
-    (calculate_most_optimum_match 1000
+    (calculate_most_optimum_match 100000000
        (construct_hashmap (all_old_matches case.db_path)))
-   real_case 
+  case 
 
-let () = blah real_case
+let () = blah test_case
+
+let _ = Hashtbl.iter (fun (uid1, uid2) score -> Printf.printf "Pair: %s , %s; score: %i\n" uid1 uid2 score) (construct_hashmap (all_old_matches "irmin/new"))

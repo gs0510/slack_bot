@@ -28,7 +28,7 @@ let members =
         |> Util.member "members" |> Util.to_list )
   | _ -> failwith "There's an error" )
   |> List.filter (fun id ->
-         id <> bot_id && id <> "U0J5U03J4" && id <> "U0JP4EH7H")
+         id <> bot_id && id <> "U0J5U03J4" && id <> "U0JP4EH7H" && id <> "UEQMNGNH0")
 
 let random_init = Random.init (int_of_float (Unix.time ()))
 

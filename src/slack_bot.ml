@@ -28,7 +28,7 @@ let members =
         |> Util.member "members" |> Util.to_list )
   | _ -> failwith "There's an error" )
   |> List.filter (fun id ->
-         id <> bot_id && id <> "U0J5U03J4" && id <> "U0JP4EH7H" && id <> "UEQMNGNH0")
+         id <> bot_id && id <> "U0J5U03J4" (*avsm*) && id <> "U0JP4EH7H" (*samoht*) && id <> "U0JCSR1HT" (*magnus*) && id <> "UEQMNGNH0" (* pascutto*))
 
 let random_init = Random.init (int_of_float (Unix.time ()))
 
@@ -216,6 +216,6 @@ let blah case =
   write_to_irmin_and_slack
     (calculate_most_optimum_match 1000
        (construct_hashmap (all_old_matches case.db_path)))
-    test_case
+   real_case 
 
-let () = blah test_case
+let () = blah real_case

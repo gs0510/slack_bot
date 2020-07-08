@@ -1,34 +1,13 @@
 open Yojson.Basic
 open Yojson.Basic.Util
 
-type matches = { matched : string list list } [@@deriving yojson]
-
 let config = from_file "config"
-
-let token = member "token" config |> to_string
 
 let channel = member "channel_id" config |> to_string
 
 let test_channel = member "test_channel_id" config |> to_string
 
-let bot_id = member "bot_id" config |> to_string
-
-let args_channel = [ "-F"; "token=" ^ token; "-F"; "channel=" ^ channel ]
-
-let members =
-  ( match
-      Curly.(
-        run ~args:args_channel
-          (Request.make ~url:"https://slack.com/api/conversations.members"
-             ~meth:`POST ()))
-    with
-  | Ok x ->
-      List.map to_string
-        ( from_string x.Curly.Response.body
-        |> Util.member "members" |> Util.to_list )
-  | _ -> failwith "There's an error" )
-  |> List.filter (fun id ->
-         id <> bot_id && id <> "U0J5U03J4" (*avsm*) && id <> "U0JP4EH7H" (*samoht*) && id <> "U0JCSR1HT" (*magnus*) && id <> "UEQMNGNH0" (* pascutto*))
+type matches = { matched : string list list } [@@deriving yojson]
 
 let random_init = Random.init (int_of_float (Unix.time ()))
 
@@ -171,7 +150,7 @@ let calculate_most_optimum_match num_times tbl =
   let rec loop num_iter best_match best_score =
     if num_iter = num_times then let _ = Printf.printf "\n Number iterations: %d \n" num_iter in best_match
     else
-      let new_match = shuffle members |> match_list [] in
+      let new_match = Curl_requests.members channel |> shuffle |> match_list [] in
       let new_score = compute_total_score tbl new_match in
       match new_score with
       | 0 -> let _ = Printf.printf "\n Number iterations: %d \n" num_iter in new_match
@@ -179,7 +158,7 @@ let calculate_most_optimum_match num_times tbl =
           if new_score < best_score then loop (num_iter + 1) new_match new_score
           else loop (num_iter + 1) best_match best_score
   in
-  let first_match = shuffle members |> match_list [] in
+  let first_match = Curl_requests.members channel|> shuffle |> match_list [] in
   loop 1 first_match (compute_total_score tbl first_match)
 
 let write_to_irmin our_match db_path =
@@ -195,38 +174,24 @@ let write_to_irmin our_match db_path =
   in
   Lwt_main.run irmin_write
 
-type case_record = { channel : string; db_path : string }
+type case_record = { channel : string; db_path : string ; num_iter: int}
 
 let write_to_irmin_and_slack our_match case =
   let output = create_output our_match in
   let () = Printf.printf "%s" output in
-  let args_message =
-    [
-      "-F";
-      "token=" ^ token;
-      "-F";
-      "channel=" ^ case.channel;
-      "-F";
-      "text=" ^ output;
-    ]
-  in
-  match
-    Curly.(
-      run ~args:args_message
-        (Request.make ~url:"https://slack.com/api/chat.postMessage" ~meth:`POST
-           ()))
+  match Curl_requests.write_to_slack case.channel output
   with
   | Ok _ ->
       write_to_irmin our_match case.db_path 
   | Error e -> Format.printf "Failed babqb: %a" Curly.Error.pp e
 
-let test_case = { channel = test_channel; db_path = "irmin/new" }
+let test_case = { channel = test_channel; db_path = "irmin/new" ; num_iter=1000}
 
-let real_case = { channel; db_path = "../irmin/real" }
+let real_case = { channel; db_path = "../irmin/real" ; num_iter=100000000}
 
 let blah case =
   write_to_irmin_and_slack
-    (calculate_most_optimum_match 100000000
+    (calculate_most_optimum_match case.num_iter
        (construct_hashmap (all_old_matches case.db_path)))
   case 
 

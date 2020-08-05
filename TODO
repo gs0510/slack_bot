@@ -11,6 +11,7 @@ Interaction with bot
     - skip talking to some people
 Add Cmdliner so that the script can switch between test and real case.
 Add `.opam` file so that installing slack_bot becomes easier.
+Add logging instead of Printf statements.
 
 Separating:
 - Curl requests to slack module

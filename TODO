@@ -1,7 +1,4 @@
 Clean up our code.
-Improve total_score function a bit -> different scores depending on when folks were matched (for e.g. 5 for 1 week, 3 for 2 weeks and so on).
-Script to check if irmin branch to remote branch, run the slack_bot and then push the new database.
-Push irmin database to github - make a separate repo!
 Schedule the script to run.
 Deploy the slack bot with mirageOS.
 Interaction with bot
@@ -11,10 +8,4 @@ Interaction with bot
     - skip talking to some people
 Add Cmdliner so that the script can switch between test and real case.
 Add `.opam` file so that installing slack_bot becomes easier.
-
-Separating:
-- Curl requests to slack module
-- interacting with irmin 
-- hashmap module -> constructing and reading from the hashmap. In the hashmap module, type t is hashmap, but subtype is pair (an alias type for a pair of strings, have an equality function for this type)
-- matches module, randomizing matches, creating new matches etc etc
-- driver module (connects all the modules together?)
+Add logging instead of Printf statements.

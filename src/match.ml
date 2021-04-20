@@ -30,7 +30,8 @@ let to_string (matches_list : string list list) =
        (fun acc current_match ->
          acc ^ String.concat " with " current_match ^ "\n")
        ":coffee: Matches this week:\n" )
-  ^ "\n Have some nice coffee chats! \n :sheepy: :sheepy: :sheepy: :sheepy: :sheepy: :sheepy: :sheepy: :sheepy: :sheepy:"
+  ^ "\n Have some nice coffee chats! \n :sheepy: :sheepy: :sheepy: :sheepy: :sheepy: :sheepy: :sheepy: :sheepy: :sheepy:\n\
+     Remember that I (the :coffee:bot) don't initiate a conversation. You'll have to reach out to your coffee chat partner by yourself:writing_hand:"
 
 let get_most_optimum max_iters db_path =
   let real_channel =

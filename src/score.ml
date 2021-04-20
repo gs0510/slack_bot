@@ -21,8 +21,10 @@ let single_match_score epoch =
   let now = Unix.time () in
   let value = float_of_string epoch in
   let day = 86400. in
-  if (now -. value) /. day <= 9. then 5
-  else if (now -. value) /. day <= 16. then 3
+  if (now -. value) /. day <= 9. then 10
+  else if (now -. value) /. day <= 16. then 5
+  else if (now -. value) /. day <= 28. then 3
+  else if (now -. value) /. day <= 56. then 2
   else 1
 
 (* TODO: make the following two functions somehow reasonable!!!! xD *)

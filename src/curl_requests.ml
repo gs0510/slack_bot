@@ -21,10 +21,32 @@ let get_members channel =
         |> Util.member "members" |> Util.to_list )
   | _ -> failwith "There's an error" )
   |> List.filter (fun id ->
-         id <> bot_id && id <> "U0J5U03J4" (*avsm*) && id <> "U0JP4EH7H"
-         (*samoht*) && id <> "U0JCSR1HT"
-         (*magnus*) && id <> "UEQMNGNH0"
-         (* pascutto*))
+         id <> bot_id &&
+
+         (*
+         id <> "UNZD1GY4W" (*lyrm*) &&
+         id <> "UEQMNGNH0" (*pascutto*) &&
+         id <>  "U0PFW68A3" (*engil*) &&
+         id <> "U0XKUH6LB" (*trefis*) &&
+         id <> "USAEFBTSS" (*ulysse*) &&
+        *)
+
+         (*folks who skip this week*)
+         id <> "UHG9PG222" (*NathanReb*) &&
+         id <> "U016FMK46NR" (*Ulugbek*) &&
+         id <> "U0JCSR1HT" (* magnus *) &&
+         id <> "U0J5U03J4" (*avsm*) &&
+         id <> "ULYMRQKAL" (*iona*) &&
+         id <> "U01M5NDAD8Q" (* Gabriel Belouze *) &&
+         id <>  "UAP0GA934" (* zshipko *) &&
+         id <> "U013SFKC15M" (* Antonin Décimo *) &&
+         id <> "U9GE7FGTH" (* lortex *) &&
+         id <> "UNQPQU9UH" (* gargi *) &&
+
+         (*folks who skip permanently*)
+         id <> "U0118JHAUG7" (* yman *) &&
+         id <> "UU5DVAJQ6" (* Romain Liautaud *)
+         )
 
 let write_to_slack channel output =
   let args_message =

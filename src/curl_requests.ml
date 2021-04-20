@@ -27,21 +27,26 @@ let get_members channel =
          id <> "UNZD1GY4W" (*lyrm*) &&
          id <> "UEQMNGNH0" (*pascutto*) &&
          id <>  "U0PFW68A3" (*engil*) &&
-         id <> "U0XKUH6LB" (*trefis*) &&
-         id <> "USAEFBTSS" (*ulysse*) &&
-        *)
+         id <> "UHG9PG222" (*NathanReb*) &&
+         id <> "UNQPQU9UH" (*gargi*) &&
+         *)
 
          (*folks who skip this week*)
-         id <> "UHG9PG222" (*NathanReb*) &&
          id <> "U016FMK46NR" (*Ulugbek*) &&
+         id <> "USAEFBTSS" (*ulysse*) &&
+         id <> "UDRKCMFCP" (*craigfe*) &&
          id <> "U0JCSR1HT" (* magnus *) &&
-         id <> "U0J5U03J4" (*avsm*) &&
-         id <> "ULYMRQKAL" (*iona*) &&
-         id <> "U01M5NDAD8Q" (* Gabriel Belouze *) &&
-         id <>  "UAP0GA934" (* zshipko *) &&
-         id <> "U013SFKC15M" (* Antonin Décimo *) &&
+         id <> "U0JP4EH7H" (*samoht*) &&
          id <> "U9GE7FGTH" (* lortex *) &&
-         id <> "UNQPQU9UH" (* gargi *) &&
+         id <> "U0JMF1GRW" (*def*) &&
+         id <> "U013SFKC15M" (* Antonin Décimo *) &&
+         id <> "U0J5U03J4" (*avsm*) &&
+         id <> "U01M5NDAD8Q" (* Gabriel Belouze *) &&
+         id <> "U0XKUH6LB" (*trefis*) &&
+         id <> "ULYMRQKAL" (*iona*) &&
+         id <>  "UAP0GA934" (* zshipko *) &&
+         id <> "UQ7RKM5U7" (*patrick*) &&
+         id <> "U0U6CJGH0" (*dinosaure*) &&
 
          (*folks who skip permanently*)
          id <> "U0118JHAUG7" (* yman *) &&

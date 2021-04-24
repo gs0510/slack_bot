@@ -29,6 +29,11 @@ let get_members channel =
          id <>  "U0PFW68A3" (*engil*) &&
          id <> "UHG9PG222" (*NathanReb*) &&
          id <> "UNQPQU9UH" (*gargi*) &&
+         id <> "UEDTALRKR" (*Celine*) &&
+         id <> "U0J5T0YUD" (*gemma-gordon*) &&
+         id <> "UFJNZ2ZH9" (*Jules*) &&
+         id <> "U845EHFPT" (*Kate*) &&
+         id <> "U01FFLZG0TZ" (*ngoguey*) 
          *)
 
          (*folks who skip this week*)

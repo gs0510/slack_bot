@@ -21,16 +21,14 @@ let get_members channel =
         |> Util.member "members" |> Util.to_list)
   | _ -> failwith "There's an error")
   |> List.filter (fun id ->
-         id <> bot_id
+         id <> bot_id &&
          (*
          id <> "UNZD1GY4W" (*lyrm*) &&
            id <>  "U0PFW68A3" (*engil*) &&
            id <> "UEDTALRKR" (*Celine*) &&
     		 id <> "U0218CTLAF2" (*Umashankar*) &&
          id <> "UQ7RKM5U7" (*patrick*) &&
-         id <> "U022P9TQ76X" (* odinaka joy*) &&
          id <> "U0JP4EH7H" (*samoht*) &&
-         id <> "UFJNZ2ZH9"(*Jules*) &&
          *)
          (*folks who skip this week*)
 
@@ -40,7 +38,7 @@ let get_members channel =
          id <> "U023HS3GFPX" (*Christine Rose*) &&
          id <> "USAEFBTSS" (*ulysse*) &&
          id <> "UHG9PG222" (*NathanReb*) &&
-         id <> "U01FFLZG0TZ" (*ngoguey*) 
+         id <> "U01FFLZG0TZ" (*ngoguey*) &&
          id <> "U023CTF6A56" (*shreyaswikriti*) &&
          id <> "U01M5NDAD8Q" (* Gabriel Belouze *) &&
          id <> "ULYMRQKAL" (*iona*) &&
@@ -53,13 +51,17 @@ let get_members channel =
          id <> "UAP0GA934" (* zshipko *) &&
          (* people on vacation*)
          id <> "UEQMNGNH0" (*pascutto*) &&
-         id <> "U0JCSR1HT" (* magnus *) &&
+         id <> "U022P9TQ76X" (* odinaka joy*) &&
+         id <> "UFJNZ2ZH9"(*Jules*) &&
+
+
 
          (* folks skipping until September*)
         id <> "U0J6HJZ29" (* kc*) &&
         id <> "U0J5U03J4" (*avsm*) &&
         id <> "U9GE7FGTH" (* lortex *) &&
         id <> "U013SFKC15M" (* Antonin Décimo *) &&
+        id <> "U0JCSR1HT" (* magnus *) &&
 
          (*folks who skip permanently*)
         id <> "U0118JHAUG7"(* yman *) &&

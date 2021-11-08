@@ -18,11 +18,10 @@ let real_case =
 let write_to_irmin_and_slack our_match case =
   let output = Match.to_string our_match in
   let () = Printf.printf "%s" output in
-  match Curl_requests.write_to_slack case.channel output with
+  match Lwt_main.run (Curl_requests.get_reactions case.channel) with
   | Ok _ -> Irmin_io.write_to_irmin our_match case.db_path
   | Error e ->
-      Format.printf "Curl Request to write to slack failed with error : %a"
-        Curly.Error.pp e
+      Format.printf "Http Request to write to slack failed with error : %s" e
 
 let main case =
   write_to_irmin_and_slack

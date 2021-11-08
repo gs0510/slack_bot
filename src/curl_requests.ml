@@ -21,7 +21,7 @@ let get_members channel =
         |> Util.member "members" |> Util.to_list)
   | _ -> failwith "There's an error")
   |> List.filter (fun id ->
-         id <> bot_id &&
+         id <> bot_id
          (*
          id <> "UNZD1GY4W" (*lyrm*) &&
            id <>  "U0PFW68A3" (*engil*) &&
@@ -31,41 +31,38 @@ let get_members channel =
          id <> "U0JP4EH7H" (*samoht*) &&
          *)
          (*folks who skip this week*)
-
-         id <> "UDRKCMFCP" (*craigfe*) &&
-         id <> "UNQPQU9UH" (*gargi*) &&
-         id <> "U0J5T0YUD" (*gemma-gordon*) &&
-         id <> "U023HS3GFPX" (*Christine Rose*) &&
-         id <> "USAEFBTSS" (*ulysse*) &&
-         id <> "UHG9PG222" (*NathanReb*) &&
-         id <> "U01FFLZG0TZ" (*ngoguey*) &&
-         id <> "U023CTF6A56" (*shreyaswikriti*) &&
-         id <> "U01M5NDAD8Q" (* Gabriel Belouze *) &&
-         id <> "ULYMRQKAL" (*iona*) &&
-         id <> "U023CTFM92L" (* dikshagupta*) &&
-         id <> "U0XKUH6LB" (*trefis*) &&
-         id <> "U845EHFPT" (*Kate*) &&
-         id <> "U0JMF1GRW" (*def*) &&
-          id <> "U0U6CJGH0" (*dinosaure*) &&
-         id <> "U016FMK46NR" (*Ulugbek*) &&
-         id <> "UAP0GA934" (* zshipko *) &&
+         && id <> "UDRKCMFCP"
+         (*craigfe*) && id <> "UNQPQU9UH"
+         (*gargi*) && id <> "U0J5T0YUD"
+         (*gemma-gordon*) && id <> "U023HS3GFPX"
+         (*Christine Rose*) && id <> "USAEFBTSS"
+         (*ulysse*) && id <> "UHG9PG222"
+         (*NathanReb*) && id <> "U01FFLZG0TZ"
+         (*ngoguey*) && id <> "U023CTF6A56"
+         (*shreyaswikriti*) && id <> "U01M5NDAD8Q"
+         (* Gabriel Belouze *) && id <> "ULYMRQKAL"
+         (*iona*) && id <> "U023CTFM92L"
+         (* dikshagupta*) && id <> "U0XKUH6LB"
+         (*trefis*) && id <> "U845EHFPT"
+         (*Kate*) && id <> "U0JMF1GRW"
+         (*def*) && id <> "U0U6CJGH0"
+         (*dinosaure*) && id <> "U016FMK46NR"
+         (*Ulugbek*) && id <> "UAP0GA934"
+         (* zshipko *)
          (* people on vacation*)
-         id <> "UEQMNGNH0" (*pascutto*) &&
-         id <> "U022P9TQ76X" (* odinaka joy*) &&
-         id <> "UFJNZ2ZH9"(*Jules*) &&
-
-
-
+         && id <> "UEQMNGNH0"
+         (*pascutto*) && id <> "U022P9TQ76X"
+         (* odinaka joy*) && id <> "UFJNZ2ZH9" (*Jules*)
          (* folks skipping until September*)
-        id <> "U0J6HJZ29" (* kc*) &&
-        id <> "U0J5U03J4" (*avsm*) &&
-        id <> "U9GE7FGTH" (* lortex *) &&
-        id <> "U013SFKC15M" (* Antonin Décimo *) &&
-        id <> "U0JCSR1HT" (* magnus *) &&
-
+         && id <> "U0J6HJZ29"
+         (* kc*) && id <> "U0J5U03J4"
+         (*avsm*) && id <> "U9GE7FGTH"
+         (* lortex *) && id <> "U013SFKC15M"
+         (* Antonin Décimo *) && id <> "U0JCSR1HT" (* magnus *)
          (*folks who skip permanently*)
-        id <> "U0118JHAUG7"(* yman *) &&
-        id <> "UU5DVAJQ6" (* Romain Liautaud *))
+         && id <> "U0118JHAUG7"
+         (* yman *) && id <> "UU5DVAJQ6"
+         (* Romain Liautaud *))
 
 let write_to_slack channel output =
   let args_message =
@@ -76,3 +73,46 @@ let write_to_slack channel output =
   Curly.(
     run ~args:args_message
       (Request.make ~url:"https://slack.com/api/chat.postMessage" ~meth:`POST ()))
+
+open Lwt.Infix
+
+let req channel output =
+  let uri = Uri.of_string "https://slack.com/api/chat.postMessage" in
+  let headers =
+    Cohttp.Header.of_list
+      [
+        ("Content-type", "application/json");
+        ("Authorization", "Bearer " ^ token);
+      ]
+  in
+  let body =
+    `Assoc [ ("channel", `String channel); ("text", `String output) ]
+  in
+  let serialized_body = Yojson.Basic.to_string body in
+  Cohttp_lwt_unix.Client.post ~headers ~body:(`String serialized_body) uri
+  >>= fun (rsp, body) ->
+  Cohttp_lwt.Body.to_string body >|= fun body' ->
+  match Cohttp.Code.(code_of_status rsp.status |> is_success) with
+  | false -> Error body'
+  | true -> (
+      try Ok (Yojson.Basic.from_string body')
+      with Yojson.Json_error err -> Error err)
+
+let get_reactions channel =
+  let uri = Uri.of_string "https://slack.com/api/reactions.get " in
+  let headers =
+    Cohttp.Header.of_list
+      [
+        ("Content-type", "application/json");
+        ("Authorization", "Bearer " ^ token);
+        ("channel", channel);
+      ]
+  in
+  Cohttp_lwt_unix.Client.get ~headers uri >>= fun (rsp, body) ->
+  Cohttp_lwt.Body.to_string body >|= fun body' ->
+  match Cohttp.Code.(code_of_status rsp.status |> is_success) with
+  | false -> Error body'
+  | true -> (
+      print_endline body';
+      try Ok (Yojson.Basic.from_string body')
+      with Yojson.Json_error err -> Error err)

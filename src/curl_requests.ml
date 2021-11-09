@@ -7,17 +7,7 @@ let token = member "token" config |> to_string
 
 let bot_id = member "bot_id" config |> to_string
 
-let get_members _channel =
-  [
-    (*gargi*)
-    "U0J5T0YUD";
-    (*gemma-gordon*)
-    "U023HS3GFPX";
-    (*Christine Rose*)
-    "USAEFBTSS";
-    (*ulysse*)
-    "UHG9PG222";
-  ]
+let get_members _channel = [ (*gargi*) "UNQPQU9UH"; (*Sonja*) "U010GCFPJH4" ]
 
 (* let args_channel = [ "-F"; "token=" ^ token; "-F"; "channel=" ^ channel ] in
    (match
@@ -106,6 +96,7 @@ let req channel output =
   match Cohttp.Code.(code_of_status rsp.status |> is_success) with
   | false -> Error body'
   | true -> (
+      print_endline body';
       try Ok (Yojson.Basic.from_string body')
       with Yojson.Json_error err -> Error err)
 

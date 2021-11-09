@@ -28,4 +28,6 @@ let main case =
     (Match.get_most_optimum case.num_iter case.db_path)
     case
 
-let () = main test_case
+let () =
+  print_endline test_case.channel;
+  main test_case

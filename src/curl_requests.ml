@@ -100,21 +100,36 @@ let req channel output =
       try Ok (Yojson.Basic.from_string body')
       with Yojson.Json_error err -> Error err)
 
+let parse_reactions_response resp =
+  print_endline resp;
+  try
+    Ok
+      (List.map Yojson.Safe.Util.to_string
+         (List.map
+            Yojson.Safe.Util.(member "users")
+            (Yojson.Safe.from_string resp
+            |> Yojson.Safe.Util.(member "message")
+            |> Yojson.Safe.Util.(member "reactions")
+            |> Yojson.Safe.Util.to_list)
+         |> Yojson.Safe.Util.flatten))
+  with Yojson.Json_error err -> Error err
+
 let get_reactions channel =
-  let uri = Uri.of_string "https://slack.com/api/reactions.get " in
+  let timestamp = "1636482281.001600" in
+  let uri =
+    Uri.of_string
+      (Format.sprintf
+         "https://slack.com/api/reactions.get?channel=%s&timestamp=%s" channel
+         timestamp)
+  in
+  let _ = print_endline (Uri.to_string uri) in
   let headers =
-    Cohttp.Header.of_list
-      [
-        ("Content-type", "application/json");
-        ("Authorization", "Bearer " ^ token);
-        ("channel", channel);
-      ]
+    Cohttp.Header.of_list [ ("Authorization", "Bearer " ^ token) ]
   in
   Cohttp_lwt_unix.Client.get ~headers uri >>= fun (rsp, body) ->
   Cohttp_lwt.Body.to_string body >|= fun body' ->
   match Cohttp.Code.(code_of_status rsp.status |> is_success) with
   | false -> Error body'
-  | true -> (
+  | true ->
       print_endline body';
-      try Ok (Yojson.Basic.from_string body')
-      with Yojson.Json_error err -> Error err)
+      parse_reactions_response body'

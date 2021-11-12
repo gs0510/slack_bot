@@ -1,5 +1,5 @@
-open Yojson.Basic
-open Yojson.Basic.Util
+open Yojson.Safe
+open Yojson.Safe.Util
 
 let config = from_file "config"
 
@@ -77,7 +77,7 @@ let write_to_slack channel output =
 
 open Lwt.Infix
 
-let req channel output =
+let write_matches channel output =
   let uri = Uri.of_string "https://slack.com/api/chat.postMessage" in
   let headers =
     Cohttp.Header.of_list
@@ -96,33 +96,30 @@ let req channel output =
   match Cohttp.Code.(code_of_status rsp.status |> is_success) with
   | false -> Error body'
   | true -> (
-      print_endline body';
-      try Ok (Yojson.Basic.from_string body')
-      with Yojson.Json_error err -> Error err)
+      try Ok (from_string body') with Yojson.Json_error err -> Error err)
 
 let parse_reactions_response resp =
-  print_endline resp;
   try
     Ok
-      (List.map Yojson.Safe.Util.to_string
-         (List.map
-            Yojson.Safe.Util.(member "users")
-            (Yojson.Safe.from_string resp
-            |> Yojson.Safe.Util.(member "message")
-            |> Yojson.Safe.Util.(member "reactions")
-            |> Yojson.Safe.Util.to_list)
-         |> Yojson.Safe.Util.flatten))
+      (List.sort_uniq String.compare
+         (List.map Util.to_string
+            (List.map
+               Util.(member "users")
+               (from_string resp
+               |> Util.(member "message")
+               |> Util.(member "reactions")
+               |> Util.to_list)
+            |> Util.flatten)))
   with Yojson.Json_error err -> Error err
 
-let get_reactions channel =
-  let timestamp = "1636482281.001600" in
+let get_reactions channel db_path =
+  let timestamp = Irmin_io.read_timestamp_from_irmin db_path in
   let uri =
     Uri.of_string
       (Format.sprintf
          "https://slack.com/api/reactions.get?channel=%s&timestamp=%s" channel
          timestamp)
   in
-  let _ = print_endline (Uri.to_string uri) in
   let headers =
     Cohttp.Header.of_list [ ("Authorization", "Bearer " ^ token) ]
   in
@@ -130,6 +127,32 @@ let get_reactions channel =
   Cohttp_lwt.Body.to_string body >|= fun body' ->
   match Cohttp.Code.(code_of_status rsp.status |> is_success) with
   | false -> Error body'
-  | true ->
+  | true -> parse_reactions_response body'
+
+let parse_ts resp = from_string resp |> member "ts" |> to_string
+
+let write_opt_in_message channel =
+  let uri = Uri.of_string "https://slack.com/api/chat.postMessage" in
+  let message =
+    "Hi <!here>?, who wants to have a coffee-chat this week? React to this \
+     message, for example with a :raised_hand::skin-tone-4:"
+  in
+  let headers =
+    Cohttp.Header.of_list
+      [
+        ("Content-type", "application/json");
+        ("Authorization", "Bearer " ^ token);
+      ]
+  in
+  let body =
+    `Assoc [ ("channel", `String channel); ("text", `String message) ]
+  in
+  let serialized_body = Yojson.Basic.to_string body in
+  Cohttp_lwt_unix.Client.post ~headers ~body:(`String serialized_body) uri
+  >>= fun (rsp, body) ->
+  Cohttp_lwt.Body.to_string body >|= fun body' ->
+  match Cohttp.Code.(code_of_status rsp.status |> is_success) with
+  | false ->
       print_endline body';
-      parse_reactions_response body'
+      Error body'
+  | true -> ( try Ok (parse_ts body') with Yojson.Json_error err -> Error err)

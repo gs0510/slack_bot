@@ -7,6 +7,8 @@ let info message =
 
 type matches = { matched : string list list } [@@deriving yojson]
 
+type timestamp = string
+
 let get_old_matches db_path =
   let git_config = Irmin_git.config ~bare:true db_path in
   let epoch_list =
@@ -28,7 +30,7 @@ let get_old_matches db_path =
   in
   List.combine epoch_list matches
 
-let write_to_irmin our_match db_path =
+let write_matches_to_irmin our_match db_path =
   let git_config = Irmin_git.config ~bare:true db_path in
   let yojson_string_to_print =
     Yojson.Safe.to_string (matches_to_yojson { matched = our_match })
@@ -45,3 +47,19 @@ let write_to_irmin our_match db_path =
       yojson_string_to_print ~info:(info message)
   in
   Lwt_main.run irmin_write
+
+let write_timestamp_to_irmin timestamp db_path =
+  let git_config = Irmin_git.config ~bare:true db_path in
+  let irmin_write =
+    let message = "last opt-in message's timestamp" in
+    Git_store.Repo.v git_config >>= Git_store.master >>= fun t ->
+    Git_store.set_exn t [ "last_timestamp" ] timestamp ~info:(info message)
+  in
+  Lwt_main.run irmin_write
+
+let read_timestamp_from_irmin db_path =
+  let git_config = Irmin_git.config ~bare:true db_path in
+  Git_store.Repo.v git_config
+  >>= Git_store.master
+  >>= (fun t -> Git_store.get t [ "last_timestamp" ])
+  |> Lwt_main.run

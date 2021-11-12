@@ -38,7 +38,9 @@ let to_string (matches_list : string list list) =
 
 let get_most_optimum (case : Types.case_record) =
   let members =
-    match Lwt_main.run (Http_requests.get_reactions case.channel) with
+    match
+      Lwt_main.run (Http_requests.get_reactions case.channel case.db_path)
+    with
     | Error _ -> assert false
     | Ok members -> members
   in

@@ -84,7 +84,7 @@ let info message = Irmin_unix.info ~author:"Gargi and Sonja" "%s" message
 
 open Lwt.Infix
 
-let write_to_irmin () =
+let write_matches_to_irmin () =
   let yojson_string_to_print =
     Yojson.Safe.to_string (matches_to_yojson { matched = first_matches_uids })
   in
@@ -96,4 +96,4 @@ let write_to_irmin () =
   in
   Lwt_main.run irmin_write
 
-let () = write_to_irmin ()
+let () = write_matches_to_irmin ()

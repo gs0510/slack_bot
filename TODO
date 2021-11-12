@@ -1,3 +1,5 @@
+# TODO
+
 Clean up our code.
 Schedule the script to run.
 Deploy the slack bot with mirageOS.
@@ -9,3 +11,9 @@ Interaction with bot
 Add Cmdliner so that the script can switch between test and real case.
 Add `.opam` file so that installing slack_bot becomes easier.
 Add logging instead of Printf statements.
+
+## NEW TODO
+
+- Rewrite irmin_unix to irmin git
+- Have git interactions inside the code rather than a script
+- Implement a scheduler (with sleeping); duration

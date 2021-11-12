@@ -7,7 +7,7 @@ let real_channel = member "channel_id" config |> to_string
 
 let test_channel = member "test_channel_id" config |> to_string
 
-type case_record = { channel : string; db_path : string; num_iter : int }
+open Types
 
 let test_case =
   { channel = test_channel; db_path = "irmin/new"; num_iter = 1000 }
@@ -18,15 +18,12 @@ let real_case =
 let write_to_irmin_and_slack our_match case =
   let output = Match.to_string our_match in
   let () = Printf.printf "%s" output in
-  match Lwt_main.run (Curl_requests.req case.channel output) with
+  match Lwt_main.run (Http_requests.req case.channel output) with
   | Ok _ -> Irmin_io.write_to_irmin our_match case.db_path
   | Error e ->
       Format.printf "Http Request to write to slack failed with error : %s" e
 
-let main case =
-  write_to_irmin_and_slack
-    (Match.get_most_optimum case.num_iter case.db_path)
-    case
+let main case = write_to_irmin_and_slack (Match.get_most_optimum case) case
 
 let () =
   print_endline test_case.channel;

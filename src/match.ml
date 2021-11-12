@@ -1,4 +1,3 @@
-open Yojson.Basic
 open Yojson.Basic.Util
 
 let () = Random.init (int_of_float (Unix.time ()))
@@ -37,20 +36,15 @@ let to_string (matches_list : string list list) =
      Remember that I (the :coffee:bot) don't initiate a conversation. You'll \
      have to reach out to your coffee chat partner by yourself:writing_hand:"
 
-let get_most_optimum max_iters db_path =
-  let channel =
-    from_file "config" |> member "test_channel_id"
-    |> Yojson.Basic.Util.to_string
-  in
-  let _ = print_endline channel in
+let get_most_optimum (case : Types.case_record) =
   let members =
-    match Lwt_main.run (Curl_requests.get_reactions channel) with
+    match Lwt_main.run (Http_requests.get_reactions case.channel) with
     | Error _ -> assert false
     | Ok members -> members
   in
-  let tbl = Score.construct_hashmap (Irmin_io.get_old_matches db_path) in
+  let tbl = Score.construct_hashmap (Irmin_io.get_old_matches case.db_path) in
   let rec loop num_iter best_match best_score =
-    if num_iter = max_iters then
+    if num_iter = case.num_iter then
       let _ = Printf.printf "\n Number iterations: %d \n" num_iter in
       best_match
     else

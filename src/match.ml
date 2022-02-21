@@ -39,9 +39,8 @@ let to_string (matches_list : string list list) =
 let get_most_optimum (case : Types.case_record) =
   let open Lwt.Syntax in
   let* members = Http_requests.get_reactions case.channel case.db_path in
-  let members = match members with
-    | Error _ -> assert false
-    | Ok members -> members
+  let members =
+    match members with Error _ -> assert false | Ok members -> members
   in
   let* old_matches = Irmin_io.get_old_matches case.db_path in
   let tbl = Score.construct_hashmap old_matches in

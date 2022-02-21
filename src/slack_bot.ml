@@ -23,7 +23,8 @@ let write_matches_to_irmin_and_slack our_match case =
   match result with
   | Ok _ -> Irmin_io.write_matches_to_irmin our_match case.db_path
   | Error e ->
-      Format.printf "Http Request to write to slack failed with error : %s" e; Lwt.return ()
+      Format.printf "Http Request to write to slack failed with error : %s" e;
+      Lwt.return ()
 
 let write_opt_in_to_irmin_and_slack case =
   let open Lwt.Syntax in
@@ -31,7 +32,8 @@ let write_opt_in_to_irmin_and_slack case =
   match result with
   | Ok ts -> Irmin_io.write_timestamp_to_irmin ts case.db_path
   | Error e ->
-      Format.printf "Http Request to write to slack failed with error : %s" e; Lwt.return ()
+      Format.printf "Http Request to write to slack failed with error : %s" e;
+      Lwt.return ()
 
 let main case =
   let open Lwt.Syntax in

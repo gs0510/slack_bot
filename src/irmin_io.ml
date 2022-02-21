@@ -13,19 +13,15 @@ let get_old_matches db_path =
   let open Lwt.Syntax in
   let git_config = Irmin_git.config ~bare:true db_path in
   let* epoch_list =
-    Git_store.Repo.v git_config
-    >>= Git_store.main
-    >>= (fun t ->
-          (* todo: also handle the case of directories with an error message*)
-          Git_store.list t [ "matches" ] >|= List.map (fun (step, _) -> step))
+    Git_store.Repo.v git_config >>= Git_store.main >>= fun t ->
+    (* todo: also handle the case of directories with an error message*)
+    Git_store.list t [ "matches" ] >|= List.map (fun (step, _) -> step)
   in
   let* matches =
-    Git_store.Repo.v git_config
-    >>= Git_store.main
-    >>= (fun t ->
-          Lwt_list.map_s
-            (fun epoch -> Git_store.get t [ "matches"; epoch ])
-            epoch_list)
+    Git_store.Repo.v git_config >>= Git_store.main >>= fun t ->
+    Lwt_list.map_s
+      (fun epoch -> Git_store.get t [ "matches"; epoch ])
+      epoch_list
   in
   Lwt.return (List.combine epoch_list matches)
 
@@ -46,12 +42,11 @@ let write_matches_to_irmin our_match db_path =
 
 let write_timestamp_to_irmin timestamp db_path =
   let git_config = Irmin_git.config ~bare:true db_path in
-    let message = "last opt-in message's timestamp" in
-    Git_store.Repo.v git_config >>= Git_store.main >>= fun t ->
-    Git_store.set_exn t [ "last_timestamp" ] timestamp ~info:(info message)
+  let message = "last opt-in message's timestamp" in
+  Git_store.Repo.v git_config >>= Git_store.main >>= fun t ->
+  Git_store.set_exn t [ "last_timestamp" ] timestamp ~info:(info message)
 
 let read_timestamp_from_irmin db_path =
   let git_config = Irmin_git.config ~bare:true db_path in
-  Git_store.Repo.v git_config
-  >>= Git_store.main
-  >>= (fun t -> Git_store.get t [ "last_timestamp" ])
+  Git_store.Repo.v git_config >>= Git_store.main >>= fun t ->
+  Git_store.get t [ "last_timestamp" ]

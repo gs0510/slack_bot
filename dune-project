@@ -13,4 +13,12 @@
 
 (package
  (name slack_bot)
- (depends ppx_deriving_yojson lwt yojson irmin-unix cohttp-lwt-unix))
+ (depends
+  ppx_deriving_yojson
+  lwt
+  yojson
+  irmin-unix
+  cohttp-lwt-unix
+  mirage-time-unix
+  ptime
+  mirage-clock-unix))

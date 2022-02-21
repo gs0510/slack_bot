@@ -35,8 +35,8 @@ let write_opt_in_to_irmin_and_slack case =
 
 let main case =
   let open Lwt.Syntax in
-  let* most_optimum = Match.get_most_optimum case in
-  write_matches_to_irmin_and_slack most_optimum case
+  let* () = Schedule.sleep_till_next_opt_in () in
+  write_opt_in_to_irmin_and_slack case
 
 let () =
   Lwt_main.run (main test_case)

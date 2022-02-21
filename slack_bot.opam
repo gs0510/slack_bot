@@ -13,6 +13,9 @@ depends: [
   "yojson"
   "irmin-unix"
   "cohttp-lwt-unix"
+  "mirage-time-unix"
+  "ptime"
+  "mirage-clock-unix"
 ]
 build: [
   ["dune" "subst"] {pinned}

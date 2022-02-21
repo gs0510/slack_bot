@@ -45,7 +45,8 @@ let parse_reactions_response resp =
   with Yojson.Json_error err -> Error err
 
 let get_reactions channel db_path =
-  let timestamp = Irmin_io.read_timestamp_from_irmin db_path in
+  let open Lwt.Syntax in
+  let* timestamp = Irmin_io.read_timestamp_from_irmin db_path in
   let uri =
     Uri.of_string
       (Format.sprintf

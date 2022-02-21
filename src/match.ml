@@ -37,14 +37,14 @@ let to_string (matches_list : string list list) =
      have to reach out to your coffee chat partner by yourself:writing_hand:"
 
 let get_most_optimum (case : Types.case_record) =
-  let members =
-    match
-      Lwt_main.run (Http_requests.get_reactions case.channel case.db_path)
-    with
+  let open Lwt.Syntax in
+  let* members = Http_requests.get_reactions case.channel case.db_path in
+  let members = match members with
     | Error _ -> assert false
     | Ok members -> members
   in
-  let tbl = Score.construct_hashmap (Irmin_io.get_old_matches case.db_path) in
+  let* old_matches = Irmin_io.get_old_matches case.db_path in
+  let tbl = Score.construct_hashmap old_matches in
   let rec loop num_iter best_match best_score =
     if num_iter = case.num_iter then
       let _ = Printf.printf "\n Number iterations: %d \n" num_iter in
@@ -61,4 +61,4 @@ let get_most_optimum (case : Types.case_record) =
           else loop (num_iter + 1) best_match best_score
   in
   let first_match = members |> shuffle |> pair_up_list [] in
-  loop 1 first_match (Score.compute_total tbl first_match)
+  Lwt.return (loop 1 first_match (Score.compute_total tbl first_match))

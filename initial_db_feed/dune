@@ -1,4 +1,0 @@
-(executable
- (name manual_feed)
- (preprocess (pps ppx_deriving_yojson))
- (libraries lwt yojson irmin-unix))

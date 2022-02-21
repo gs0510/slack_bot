@@ -1,6 +1,5 @@
-(* Time at which the opt-in question should be sent in UTC
-  (Notice that the opt-in message is always sent on Mondays) *)
-let opt_int_time = (10, 00, 0)
+(* Time at which the message should be sent in UTC *)
+let schedule_time = (10, 00, 0)
 
 let weekday_to_int = function
 | `Mon -> 0
@@ -13,18 +12,31 @@ let weekday_to_int = function
 
 let time_to_secs (h, min, sec) = sec + min * 60 + h * 60 * 60
 
-let nsecs_of_secs s = Int64.(mul (of_int s) 1_000_000_000L)
-
-let time_since_last_opt_in now =
+let time_since_last_message now schedule_day =
   let weekday = Ptime.weekday now in
   let _current_date, (current_time, _) = Ptime.to_date_time now in
-  let secs_since_eleven = time_to_secs current_time - time_to_secs opt_int_time in
-  if weekday = `Mon && secs_since_eleven < 0 then
-    - secs_since_eleven
+  (* secs_passed is negative if we are before schedule time *)
+  let secs_passed = time_to_secs current_time - time_to_secs schedule_time in
+  if weekday = schedule_day && secs_passed < 0 then
+    - secs_passed
   else
-    let secs_since_last_monday = 60 * 60 * 24 *  (weekday_to_int weekday) in
-    let secs_in_week = 60 * 60 * 24 * 7 in
-    secs_in_week - secs_since_last_monday - secs_since_eleven
+    let days_passed =
+      let days_since_schedule_day = (weekday_to_int weekday - weekday_to_int schedule_day + 7) mod 7 in
+      60 * 60 * 24 *  days_since_schedule_day
+    in
+    let full_week = 60 * 60 * 24 * 7 in
+    full_week - days_passed - secs_passed
+
+let sleep_secs secs =
+  let nsecs_of_secs s = Int64.(mul (of_int s) 1_000_000_000L) in
+  Time.sleep_ns (nsecs_of_secs secs)
 
 let sleep_till_next_opt_in () =
-  Time.sleep_ns (nsecs_of_secs (time_since_last_opt_in (Pclock.now_d_ps () |> Ptime.v)))
+  let schedule_day = `Mon in
+  let now = Pclock.now_d_ps () |> Ptime.v in
+  sleep_secs (time_since_last_message now schedule_day)
+
+let sleep_till_next_matches () =
+  let schedule_day = `Tue in
+  let now = Pclock.now_d_ps () |> Ptime.v in
+  sleep_secs (time_since_last_message now schedule_day)

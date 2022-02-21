@@ -3,4 +3,4 @@
  (modules_without_implementation types)
  (preprocess
   (pps ppx_deriving_yojson))
- (libraries lwt curly yojson irmin-unix))
+ (libraries lwt cohttp-lwt-unix yojson irmin-unix))
